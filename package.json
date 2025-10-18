@@ -15,7 +15,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@sparticuz/chromium": "^128.0.0",
+    "@sparticuz/chromium": "^141.0.0",
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "playwright-core": "^1.45.0",
