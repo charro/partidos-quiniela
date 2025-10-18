@@ -1,19 +1,24 @@
 {
   "name": "quiniela-proxy",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Proxy serverless para la Quiniela",
+  "main": "api/quiniela.js",
   "scripts": {
+    "start": "vercel dev",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
+  "keywords": [
+    "vercel",
+    "serverless",
+    "playwright"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "axios": "^1.12.2",
+    "@sparticuz/chromium": "^125.0.1",
     "cors": "^2.8.5",
-    "express": "^5.1.0",
-    "playwright-chromium": "^1.56.1",
-    "serverless-http": "^4.0.0"
+    "express": "^4.19.2",
+    "playwright-core": "^1.45.0",
+    "serverless-http": "^3.2.0"
   }
 }
