@@ -2,9 +2,8 @@
 const express = require('express');
 const { chromium } = require('playwright-chromium'); // Usamos Playwright
 const app = express();
-
 // IMPORTANTE: Express debe ser envuelto para Serverless Functions de Vercel
-const handler = require('serverless-http')(app);
+const serverless = require('serverless-http');
 
 // ----------------------------------------------------------------------
 // Función central para obtener JSON usando Playwright (Evita el 403)
@@ -87,4 +86,4 @@ app.get('/quiniela', async (req, res) => {
 });
 
 // Nota: La ruta de tu API será https://[nombre-proyecto].vercel.app/api/quiniela
-module.exports = app;
+module.exports = serverless(app);
