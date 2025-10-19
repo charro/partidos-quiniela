@@ -11,7 +11,7 @@ from typing import Dict, Any, Optional
 # 1. Your GitHub Personal Access Token (PAT)
 # ⚠️ SECURITY NOTE: Load this from an environment variable for production!
 # Replace 'YOUR_GITHUB_TOKEN_HERE' with your actual token.
-TOKEN = os.environ.get("GIST_UPDATE_TOKEN", "ADD_HERE")
+TOKEN = os.environ.get("GIST_UPDATE_TOKEN", "")
 
 # 2. The ID of the Gist you want to update
 # GIST URL: https://gist.github.com/charro/d6b5be152cf5e3f6ebb02f2daa60f291
@@ -33,7 +33,10 @@ STEALTH_HEADERS = {
     'Referer': 'https://juegos.loteriasyapuestas.es/',
     'Origin': 'https://juegos.loteriasyapuestas.es',
     'Accept': 'application/json, text/javascript, */*; q=0.01',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'priority': 'u=1, i'
+    'sec-ch-ua' '"Chromium";v="140", "Not=A?Brand";v="24", "Google Chrome";v="140"',
+    'sec-fetch-mode': 'cors'
 }
 
 # =====================================================================
