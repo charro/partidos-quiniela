@@ -1,4 +1,4 @@
-name: Python & Poetry Simplificado
+name: Poetry con Script Oficial
 
 on: [push]
 
@@ -8,20 +8,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Configurar Python y Poetry (incluye cache) 📦
+      - name: Configurar Python 🐍
+        # Este paso es esencial para que 'python3' esté disponible.
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11' # Versión de Python
-          # Al usar cache: 'poetry', la acción:
-          # 1. Instala Poetry
-          # 2. Configura el cache usando poetry.lock
-          cache: 'poetry'
+          python-version: '3.11'
 
-      - name: Instalar dependencias
-        # Poetry ya está instalado y el cache está configurado,
-        # por lo que este paso será rápido si no hay cambios en poetry.lock.
+      - name: Instalar Poetry con el Script Oficial 📦
+        # Ejecuta el script de instalación en el runner.
+        run: curl -sSL https://install.python-poetry.org | python3 -
+
+      - name: Instalar dependencias con Poetry
+        # Asegúrate de que el PATH esté actualizado para usar 'poetry'
+        # o puedes necesitar usar el path completo si la instalación es local.
+        # Por lo general, en los runners de GitHub, el comando 'poetry' estará disponible.
         run: poetry install --no-interaction --no-root
 
       - name: Ejecutar el script
-        # Ejecuta el script dentro del entorno virtual de Poetry.
         run: poetry run python partidos_quiniela/partidos.py
