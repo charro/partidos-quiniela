@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pronósticos de Partidos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f9;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 10px;
+        }
+
+        /* ESTILOS DE LA LISTA */
+        ul#match-list {
+            list-style: none;
+            padding: 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fff;
+        }
+        li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+        li:last-child {
+            border-bottom: none;
+        }
+        .match-name {
+            flex-grow: 1;
+            margin-right: 20px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        /* ESTILOS DE LAS OPCIONES (1 X 2) */
+        .prediction-options {
+            display: flex;
+            gap: 20px;
+        }
+        .prediction-options label {
+            cursor: pointer;
+            padding: 5px 8px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            transition: background-color 0.2s;
+            font-weight: normal;
+        }
+        .prediction-options label:hover {
+            background-color: #e0e0e0;
+        }
+        .prediction-options input[type="radio"] {
+            margin-right: 5px;
+            /* Ocultar el radio button nativo para estilizar mejor */
+            opacity: 0;
+            width: 0;
+            height: 0;
+            position: absolute;
+        }
+        /* Estilo para la opción seleccionada */
+        .prediction-options input[type="radio"]:checked + span {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+            padding: 5px 8px;
+            display: inline-block;
+        }
+
+        /* ESTILOS DEL CAMPO DE USUARIO Y BOTÓN */
+        #user-input {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #e6f7ff;
+        }
+
+        #user-input label {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        #user-input input[type="text"],
+        #jornada-display { /* Estilo para el nuevo campo de Jornada */
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: calc(100% - 130px);
+            box-sizing: border-box; /* Asegura que el padding no cambie el ancho */
+            display: block;
+            margin-top: 5px;
+            background-color: #f9f9f9;
+        }
+        #jornada-display {
+            font-weight: bold;
+            border: 1px solid #007bff;
+            color: #0056b3;
+        }
+
+        #submit-button {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin-top: 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #submit-button:hover:not(:disabled) {
+            background-color: #0056b3;
+        }
+
+        #submit-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        #message-area {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Quiniela de 15 Partidos</h1>
+
+    <div id="user-input">
+        <label for="username">Tu Nombre/Alias:</label>
+        <input type="text" id="username" required placeholder="Introduce tu nombre">
+
+        <label for="jornada-display">Jornada:</label>
+        <span id="jornada-display">Cargando...</span>
+    </div>
+
+    <form id="quiniela-form">
+        <ul id="match-list">
+            <li>Cargando partidos...</li>
+        </ul>
+
+        <button type="submit" id="submit-button" disabled>Enviar Pronóstico</button>
+    </form>
+
+    <p id="message-area"></p>
+
+    <script>
+        // URL del JSON de partidos
+        const MATCH_DATA_URL = 'https://gist.githubusercontent.com/charro/d6b5be152cf5e3f6ebb02f2daa60f291/raw/991320bb58fb6edd535c47a34f6e9b3ac19e236e/partidos.json';
+        // URL del servicio de Google Scripts para enviar datos
+        const SUBMIT_URL = "https://script.google.com/macros/s/AKfycbwLppkm-e0Tx2a6HEzzl7IZo0sej-2HIkdp4rkWyAIY5Na9hK--oEYe7mXw34MmgCE0jg/exec";
+
+        const matchList = document.getElementById('match-list');
+        const form = document.getElementById('quiniela-form');
+        const usernameInput = document.getElementById('username');
+        const submitButton = document.getElementById('submit-button');
+        const messageArea = document.getElementById('message-area');
+        const jornadaDisplay = document.getElementById('jornada-display'); // Nuevo
+        const MAX_MATCHES = 15;
+
+        // 🆕 1. Variable global para almacenar la jornada
+        let currentJornada = null;
+
+        function createPredictionOption(name, value) {
+            // ... (Función sin cambios)
+            const label = document.createElement('label');
+            const input = document.createElement('input');
+            const textSpan = document.createElement('span');
+
+            input.type = 'radio';
+            input.name = name;
+            input.value = value;
+            textSpan.textContent = value;
+
+            label.appendChild(input);
+            label.appendChild(textSpan);
+
+            return label;
+        }
+
+        async function fetchAndRenderMatches() {
+            matchList.innerHTML = '<li>Cargando partidos...</li>';
+            submitButton.disabled = true;
+            jornadaDisplay.textContent = 'Cargando...'; // Resetear el display
+
+            try {
+                const response = await fetch(MATCH_DATA_URL);
+
+                if (!response.ok) {
+                    throw new Error(`Error HTTP: ${response.status}`);
+                }
+
+                const allMatchesObject = await response.json();
+
+                // 🆕 2. Extraer y almacenar la jornada
+                currentJornada = allMatchesObject.jornada || "N/A";
+                jornadaDisplay.textContent = currentJornada; // Mostrar al usuario
+
+                const allMatches = allMatchesObject.partidos;
+
+                if (!Array.isArray(allMatches) || allMatches.length === 0) {
+                    matchList.innerHTML = '<li>El archivo JSON no contiene una lista de partidos válida.</li>';
+                    return;
+                }
+
+                const matchesToRender = allMatches.slice(0, MAX_MATCHES);
+
+                matchList.innerHTML = '';
+
+                matchesToRender.forEach((match, index) => {
+                    const listItem = document.createElement('li');
+                    // ... (El resto del bucle de renderizado es el mismo)
+                    const matchId = (index + 1).toString();
+
+                    const matchName = document.createElement('span');
+                    matchName.classList.add('match-name');
+                    matchName.textContent = `${match.local} - ${match.visitante}`;
+
+                    const predictionOptions = document.createElement('div');
+                    predictionOptions.classList.add('prediction-options');
+
+                    const radioGroupName = matchId;
+
+                    predictionOptions.appendChild(createPredictionOption(radioGroupName, '1'));
+                    predictionOptions.appendChild(createPredictionOption(radioGroupName, 'X'));
+                    predictionOptions.appendChild(createPredictionOption(radioGroupName, '2'));
+
+                    listItem.appendChild(matchName);
+                    listItem.appendChild(predictionOptions);
+                    matchList.appendChild(listItem);
+                });
+
+                submitButton.disabled = false;
+
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                matchList.innerHTML = `<li>❌ Error al cargar los partidos: ${error.message}.</li>`;
+                jornadaDisplay.textContent = 'ERROR';
+            }
+        }
+
+        /**
+         * Función que gestiona el envío de datos al Google Script usando FormData
+         * para evitar el error de CORS/OPTIONS.
+         */
+        async function handleSubmit(event) {
+            event.preventDefault();
+
+            messageArea.textContent = '';
+            messageArea.style.backgroundColor = 'transparent';
+            submitButton.disabled = true;
+            submitButton.textContent = 'Enviando... ⏳';
+
+            const username = usernameInput.value.trim();
+            if (username.length === 0) {
+                // ... (Validación de nombre)
+                messageArea.textContent = '🛑 ¡Debes introducir tu nombre o alias!';
+                messageArea.style.backgroundColor = '#f8d7da';
+                usernameInput.focus();
+                submitButton.disabled = false;
+                submitButton.textContent = 'Enviar Pronóstico';
+                return;
+            }
+
+            // Nueva validación de jornada
+            if (!currentJornada || currentJornada === "N/A") {
+                messageArea.textContent = '🛑 ¡La información de la jornada no está disponible. No se puede enviar!';
+                messageArea.style.backgroundColor = '#f8d7da';
+                submitButton.disabled = false;
+                submitButton.textContent = 'Enviar Pronóstico';
+                return;
+            }
+
+
+            // 1. Recopilar los resultados
+            const results = {};
+            let hasOneResult = false;
+
+            const selectedRadios = form.querySelectorAll('input[type="radio"]:checked');
+
+            selectedRadios.forEach(radio => {
+                results[radio.name] = radio.value;
+                hasOneResult = true;
+            });
+
+            if (!hasOneResult) {
+                // ... (Validación de resultados)
+                messageArea.textContent = '⚠️ ¡Debes seleccionar al menos un pronóstico para enviar!';
+                messageArea.style.backgroundColor = '#fff3cd';
+                submitButton.disabled = false;
+                submitButton.textContent = 'Enviar Pronóstico';
+                return;
+            }
+
+            // 2. CREAR EL CUERPO DE LA PETICIÓN USANDO FormData (¡SOLUCIÓN CORS!)
+            const payload = new FormData();
+            payload.append("name", username);
+            payload.append("results", JSON.stringify(results));
+
+            // 🆕 3. AÑADIR EL PARÁMETRO "JORNADA" AL PAYLOAD
+            payload.append("jornada", currentJornada); // Envía el valor extraído
+
+            // 3. Enviar la solicitud POST
+            try {
+                // ... (Lógica de envío)
+                const response = await fetch(SUBMIT_URL, {
+                    method: 'POST',
+                    body: payload
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.status === 'success') {
+                    messageArea.textContent = `✅ ¡Pronóstico de ${username} para la jornada ${currentJornada} enviado con éxito!`;
+                    messageArea.style.backgroundColor = '#d4edda';
+                } else {
+                    throw new Error(data.message || `Error en el servicio (Código: ${response.status}).`);
+                }
+
+            } catch (error) {
+                console.error('Error al enviar el pronóstico:', error);
+                messageArea.textContent = `❌ Error de envío: ${error.message}`;
+                messageArea.style.backgroundColor = '#f8d7da';
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Enviar Pronóstico';
+            }
+        }
+
+        // Event Listeners
+        form.addEventListener('submit', handleSubmit);
+
+        // Cargar y renderizar los partidos al inicio
+        fetchAndRenderMatches();
+    </script>
+
+</body>
+</html>

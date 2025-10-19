@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultados de Las Rubias para la Quiniela</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px; /* Ancho ajustado */
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f9;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 10px;
+        }
+        #jornada-header {
+            text-align: center;
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            color: #007bff;
+            font-weight: bold;
+        }
+        #results-container {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        td.match-name {
+            font-weight: bold;
+        }
+        td.prediction {
+            text-align: center;
+            font-size: 1.1em;
+            font-weight: bold;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .prediction-value {
+            color: #28a745;
+            font-size: 1.2em;
+        }
+        .prediction-author {
+            font-size: 0.8em;
+            color: #6c757d;
+            margin-top: 2px;
+        }
+        #loading-message {
+            text-align: center;
+            font-size: 1.2em;
+            color: #6c757d;
+            padding: 50px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Pronóstico de Las Rubias para la Quiniela</h1>
+
+    <div id="loading-message">Cargando datos... ⏳</div>
+
+    <div id="jornada-header"></div>
+
+    <div id="results-container" style="display:none;">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 5%;">Nº</th>
+                    <th style="width: 55%;">Partido</th>
+                    <th style="width: 40%; text-align: center;">Pronóstico (Último)</th>
+                </tr>
+            </thead>
+            <tbody id="results-table-body">
+                </tbody>
+        </table>
+    </div>
+
+    <script>
+        // URL del Google Script (GET)
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwHNYbQoVUri74sLtB_j7nkPxg7yAhIFd0hsn4oWN0gBJgZCBVWYAP1Vfm3AGAmFs9E/exec";
+
+        // URL del JSON de partidos
+        const MATCH_DATA_URL = 'https://gist.githubusercontent.com/charro/d6b5be152cf5e3f6ebb02f2daa60f291/raw/790ed8ca4e3f7916bf4c0c76a1e416aef30e273b/partidos.json';
+
+        const loadingMessage = document.getElementById('loading-message');
+        const jornadaHeader = document.getElementById('jornada-header');
+        const resultsContainer = document.getElementById('results-container');
+        const resultsTableBody = document.getElementById('results-table-body');
+        const MAX_MATCHES = 15;
+
+        /**
+         * Realiza ambas peticiones, las combina y renderiza los resultados.
+         */
+        async function loadAndRenderResults() {
+            loadingMessage.style.display = 'block';
+            resultsContainer.style.display = 'none';
+            jornadaHeader.textContent = '';
+            resultsTableBody.innerHTML = '';
+
+            try {
+                // 1. Petición para obtener los nombres de los partidos
+                const matchResponse = await fetch(MATCH_DATA_URL);
+                if (!matchResponse.ok) throw new Error("Error al cargar la lista de partidos.");
+                const matchDataObject = await matchResponse.json();
+                const matchNames = matchDataObject.partidos.slice(0, MAX_MATCHES);
+                if (matchNames.length === 0) throw new Error("La lista de partidos está vacía.");
+
+                // 2. Petición para obtener los pronósticos consolidados (incluyendo el autor)
+                const scriptResponse = await fetch(GOOGLE_SCRIPT_URL);
+                if (!scriptResponse.ok) throw new Error("Error al llamar al Google Script.");
+
+                const scriptData = await scriptResponse.json();
+
+                if (scriptData.status !== 'success') {
+                    throw new Error(scriptData.message || "Error desconocido en el script.");
+                }
+
+                const jornada = scriptData.jornada;
+                const consolidatedData = scriptData.pronosticos_consolidados; // Nuevo formato: {"1": {value: "1", author: "Pepe"}, ...}
+
+                // 3. Renderizar la cabecera de la jornada
+                jornadaHeader.textContent = `Jornada Nº ${jornada}`;
+
+                // 4. Combinar y renderizar los resultados
+                for (let i = 0; i < MAX_MATCHES; i++) {
+                    const matchNumber = (i + 1).toString();
+                    const partido = matchNames[i];
+
+                    // Obtener los datos consolidados (incluye autor)
+                    const data = consolidatedData[matchNumber] || { value: "", author: "" };
+                    const pronostico = data.value || "—";
+                    const autor = data.author ? `(por ${data.author})` : "Sin pronóstico";
+                    const isPronounced = !!data.value;
+
+                    const row = resultsTableBody.insertRow();
+
+                    // Columna 1: Número de Partido
+                    let cell1 = row.insertCell();
+                    cell1.textContent = matchNumber;
+
+                    // Columna 2: Nombres de Equipos
+                    let cell2 = row.insertCell();
+                    cell2.classList.add('match-name');
+                    cell2.textContent = `${partido.local} - ${partido.visitante}`;
+
+                    // Columna 3: Pronóstico y Autor
+                    let cell3 = row.insertCell();
+                    cell3.classList.add('prediction');
+
+                    // Valor del pronóstico
+                    let valueSpan = document.createElement('span');
+                    valueSpan.classList.add('prediction-value');
+                    valueSpan.textContent = pronostico;
+
+                    // Autor del pronóstico
+                    let authorSpan = document.createElement('span');
+                    authorSpan.classList.add('prediction-author');
+                    authorSpan.textContent = autor;
+
+                    cell3.appendChild(valueSpan);
+                    if (isPronounced) {
+                        cell3.appendChild(authorSpan);
+                    }
+                }
+
+                // Mostrar la tabla y ocultar el mensaje de carga
+                loadingMessage.style.display = 'none';
+                resultsContainer.style.display = 'block';
+
+            } catch (error) {
+                console.error('Error general:', error);
+                loadingMessage.textContent = `❌ Error al cargar los resultados: ${error.message}`;
+                loadingMessage.style.color = '#dc3545';
+                loadingMessage.style.display = 'block';
+            }
+        }
+
+        // Ejecutar la carga al iniciar
+        loadAndRenderResults();
+    </script>
+
+</body>
+</html>
