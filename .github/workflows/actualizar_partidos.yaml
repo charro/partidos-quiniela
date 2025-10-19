@@ -1,4 +1,4 @@
-name: Actualizar Partidos
+name: Python & Poetry Simplificado
 
 on: [push]
 
@@ -8,24 +8,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Configurar Python 🐍
+      - name: Configurar Python y Poetry (incluye cache) 📦
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-
-      - name: Instalar Poetry 📦
-        uses: python-poetry/setup-poetry@v2
-
-      - name: Configurar Cache de Poetry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pypoetry
-          key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
-          restore-keys: ${{ runner.os }}-poetry-
+          python-version: '3.11' # Versión de Python
+          # Al usar cache: 'poetry', la acción:
+          # 1. Instala Poetry
+          # 2. Configura el cache usando poetry.lock
+          cache: 'poetry'
 
       - name: Instalar dependencias
-        # Instala todo lo que está en pyproject.toml y poetry.lock
+        # Poetry ya está instalado y el cache está configurado,
+        # por lo que este paso será rápido si no hay cambios en poetry.lock.
         run: poetry install --no-interaction --no-root
 
       - name: Ejecutar el script
+        # Ejecuta el script dentro del entorno virtual de Poetry.
         run: poetry run python partidos_quiniela/partidos.py
