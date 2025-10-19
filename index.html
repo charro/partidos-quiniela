@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiniela de Las Rubias</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 30px;
+            background-color: #f4f4f9;
+            text-align: center;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .action-button {
+            padding: 15px 25px;
+            font-size: 1.2em;
+            text-decoration: none;
+            color: white;
+            border-radius: 8px;
+            transition: background-color 0.3s, transform 0.2s;
+            display: block;
+        }
+        .action-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        #btn-enviar {
+            background-color: #007bff;
+        }
+        #btn-enviar:hover {
+            background-color: #0056b3;
+        }
+
+        #btn-ver {
+            background-color: #28a745;
+        }
+        #btn-ver:hover {
+            background-color: #1e7e34;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Bienvenido a la Quiniela de Las Rubias ⚽</h1>
+
+    <div class="button-container">
+
+        <a href="enviar_pronostico.html" class="action-button" id="btn-enviar">
+            📝 Enviar mi Pronóstico
+        </a>
+
+        <a href="pronosticos_jornada.html" class="action-button" id="btn-ver">
+            📊 Ver Pronósticos para la Jornada
+        </a>
+
+    </div>
+
+</body>
+</html>
