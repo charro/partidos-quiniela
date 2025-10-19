@@ -1,0 +1,31 @@
+name: Actualizar Partidos
+
+on: [push]
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar Python 🐍
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar Poetry 📦
+        uses: python-poetry/setup-poetry@v2
+
+      - name: Configurar Cache de Poetry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pypoetry
+          key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: ${{ runner.os }}-poetry-
+
+      - name: Instalar dependencias
+        # Instala todo lo que está en pyproject.toml y poetry.lock
+        run: poetry install --no-interaction --no-root
+
+      - name: Ejecutar el script
+        run: poetry run python partidos_quiniela/partidos.py
