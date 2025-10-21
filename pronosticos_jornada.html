@@ -7,7 +7,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            max-width: 900px; /* Ancho ajustado */
+            max-width: 900px;
             margin: 0 auto;
             padding: 20px;
             background-color: #f4f4f9;
@@ -57,8 +57,13 @@
             justify-content: center;
         }
         .prediction-value {
-            color: #28a745;
+            color: #28a745; /* Color por defecto para 1, X, 2 */
             font-size: 1.2em;
+        }
+        /* Nuevo estilo para la Triple Sugerida */
+        .prediction-value.triple-suggested {
+            color: #ff9800; /* Naranja para advertir sobre el Triple */
+            font-size: 1.1em;
         }
         .prediction-author {
             font-size: 0.8em;
@@ -75,7 +80,7 @@
 </head>
 <body>
 
-    <h1>Pronóstico de Las Rubias para la Quiniela</h1>
+    <h1>Pronóstico Consolidado por Consenso (Las Rubias)</h1>
 
     <div id="loading-message">Cargando datos... ⏳</div>
 
@@ -87,12 +92,16 @@
                 <tr>
                     <th style="width: 5%;">Nº</th>
                     <th style="width: 55%;">Partido</th>
-                    <th style="width: 40%; text-align: center;">Pronóstico (Último)</th>
+                    <th style="width: 40%; text-align: center;">Consenso</th>
                 </tr>
             </thead>
             <tbody id="results-table-body">
                 </tbody>
         </table>
+        <p style="font-size: 0.85em; margin-top: 20px;">
+            * El consenso se calcula por **mayoría de votos**. En caso de empate, se utiliza el último pronóstico enviado.
+            * Si se sugiere **TRIPLE**, es porque hay alta diversidad (mínimo 3 votos para cada opción).
+        </p>
     </div>
 
     <script>
@@ -125,7 +134,7 @@
                 const matchNames = matchDataObject.partidos.slice(0, MAX_MATCHES);
                 if (matchNames.length === 0) throw new Error("La lista de partidos está vacía.");
 
-                // 2. Petición para obtener los pronósticos consolidados (incluyendo el autor)
+                // 2. Petición para obtener los pronósticos consolidados (por consenso)
                 const scriptResponse = await fetch(GOOGLE_SCRIPT_URL);
                 if (!scriptResponse.ok) throw new Error("Error al llamar al Google Script.");
 
@@ -136,7 +145,7 @@
                 }
 
                 const jornada = scriptData.jornada;
-                const consolidatedData = scriptData.pronosticos_consolidados; // Nuevo formato: {"1": {value: "1", author: "Pepe"}, ...}
+                const consolidatedData = scriptData.pronosticos_consolidados;
 
                 // 3. Renderizar la cabecera de la jornada
                 jornadaHeader.textContent = `Jornada Nº ${jornada}`;
@@ -146,11 +155,13 @@
                     const matchNumber = (i + 1).toString();
                     const partido = matchNames[i];
 
-                    // Obtener los datos consolidados (incluye autor)
-                    const data = consolidatedData[matchNumber] || { value: "", author: "" };
-                    const pronostico = data.value || "—";
-                    const autor = data.author ? `(por ${data.author})` : "Sin pronóstico";
-                    const isPronounced = !!data.value;
+                    // Obtener los datos consolidados (incluye valor y explicación)
+                    const data = consolidatedData[matchNumber] || { value: "—", author: "Sin datos" };
+                    const pronostico = data.value;
+                    const explicacion = data.author || ""; // 'author' ahora lleva la explicación (ej: "(5 votos)")
+
+                    const isTriple = pronostico.includes("TRIPLE");
+                    const isPronounced = pronostico !== "—";
 
                     const row = resultsTableBody.insertRow();
 
@@ -163,24 +174,37 @@
                     cell2.classList.add('match-name');
                     cell2.textContent = `${partido.local} - ${partido.visitante}`;
 
-                    // Columna 3: Pronóstico y Autor
+                    // Columna 3: Pronóstico y Explicación
                     let cell3 = row.insertCell();
                     cell3.classList.add('prediction');
 
                     // Valor del pronóstico
                     let valueSpan = document.createElement('span');
                     valueSpan.classList.add('prediction-value');
-                    valueSpan.textContent = pronostico;
 
-                    // Autor del pronóstico
+                    if (isTriple) {
+                        valueSpan.classList.add('triple-suggested');
+                        valueSpan.textContent = "TRIPLE"; // Mostramos solo "TRIPLE" para que sea grande
+                    } else {
+                        valueSpan.textContent = pronostico;
+                    }
+
+                    // Explicación/Autor (votos, desempate, o desglose del triple)
                     let authorSpan = document.createElement('span');
                     authorSpan.classList.add('prediction-author');
-                    authorSpan.textContent = autor;
+
+                    if (isTriple) {
+                        // Para el triple, mostramos el detalle de los votos
+                        authorSpan.textContent = `Sugerido: ${explicacion}`;
+                    } else if (isPronounced) {
+                        // Para 1, X, 2, mostramos el número de votos o el desempate
+                        authorSpan.textContent = explicacion;
+                    } else {
+                        authorSpan.textContent = "Sin votos registrados";
+                    }
 
                     cell3.appendChild(valueSpan);
-                    if (isPronounced) {
-                        cell3.appendChild(authorSpan);
-                    }
+                    cell3.appendChild(authorSpan);
                 }
 
                 // Mostrar la tabla y ocultar el mensaje de carga
