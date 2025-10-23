@@ -25,4 +25,4 @@ jobs:
         run: poetry install --no-interaction --no-root
 
       - name: Ejecutar el script
-        run: poetry run python partidos_quiniela/partidos.py
+        run: poetry run python partidos_quiniela/actualizar_partidos_jornada.py

@@ -2,6 +2,7 @@ import requests
 import json
 import sys
 import os
+from dotenv import load_dotenv
 from typing import Dict, Any, Optional
 
 # =====================================================================
@@ -10,6 +11,8 @@ from typing import Dict, Any, Optional
 
 # 1. Your GitHub Personal Access Token (PAT)
 # ⚠️ SECURITY NOTE: Load this from an environment variable for production!
+
+load_dotenv()
 # Replace 'YOUR_GITHUB_TOKEN_HERE' with your actual token.
 TOKEN = os.environ.get("GIST_UPDATE_TOKEN", "")
 
